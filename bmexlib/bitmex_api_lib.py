@@ -387,13 +387,18 @@ class BitmexApiTool:
         @return: none
         """
         open_position = False
-
+        count = 0
         while True:
+
             posQty = self.get_position()['openingQty'] + self.get_position()['execQty']
             if posQty == 0:
+                count += 1
                 if open_position:
                     self.client.Order.Order_cancelAll(symbol=self.symbol).result()
                     open_position = False
+                if count == 10:
+                    self.logger.info('No position open.')
+                    count = 0
                 time.sleep(1)
             else:
 
