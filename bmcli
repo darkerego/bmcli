@@ -4,8 +4,8 @@ BitMex API TOOL -- Python3 powered CLI tool to make manual bitmex trading easier
 Features include: get account balance and position, create a new order,
 """
 import argparse
-from lib.bitmex_api_lib import BitmexApiTool
-from lib.conf import *
+from bmexlib.bitmex_api_lib import BitmexApiTool
+from bmexlib.conf import *
 from colorama import Fore, Style, init
 
 init(autoreset=True)
