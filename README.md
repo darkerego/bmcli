@@ -63,8 +63,13 @@ optional arguments:
 </pre>
 
 <p>
-First, edit `lib/conf.py` and add your api keys.
+First, edit `lib/conf.py` and add your api keys. Next, it is stronly recommended 
+to activate the virtual env because I have modified the libraries to stop those 
+stupid swagger client warnings:
 </p>
+<pre>
+$ . venv/bin/activate
+</pre>
 
 ###### Check Balance:
 
@@ -73,9 +78,12 @@ $ ./bmcli -b
 [+] Balance: 1417332
 </pre>
 
+### Sample Output
+
 ###### Get Current position
 
 <pre>
+$ ./bmcli -p -s ETHUSD
 [+] Position: 2000
 </pre>
 
