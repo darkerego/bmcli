@@ -1,0 +1,15 @@
+Metadata-Version: 2.0
+Name: bitmex
+Version: 0.2.2
+Summary: BitMEX API client.
+Home-page: https://github.com/bitmex/api-Connectors
+Author: Samuel Reed
+Author-email: sam@bitmex.com
+License: UNKNOWN
+Description-Content-Type: UNKNOWN
+Platform: UNKNOWN
+Requires-Dist: bravado
+
+UNKNOWN
+
+
