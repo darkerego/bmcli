@@ -33,7 +33,7 @@ if the `max chase` variable is exceeded.
 ## Usage:
 
 <pre>
-l$ ./bmcli -h
+$ ./bmcli -h
 usage: bmcli [-h] [-b] [-p]
              [-o {limit,market,post,stop,stop_limit,limit_if_touched}] [-c]
              [-F] [-M MAX_CHASE] [-t TRAILING_STOP]
