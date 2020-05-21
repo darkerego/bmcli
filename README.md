@@ -159,6 +159,7 @@ INFO:bmexlib.bitmex_api_lib:New high observed: 9550.00000000 Updating stop loss 
 INFO:bmexlib.bitmex_api_lib:New high observed: 9560.50000000 Updating stop loss to 9550.50000000
 INFO:bmexlib.bitmex_api_lib:New high observed: 9562.00000000 Updating stop loss to 9552.00000000
 INFO:bmexlib.bitmex_api_lib:New high observed: 9567.00000000 Updating stop loss to 9557.00000000
+INFO:bmexlib.bitmex_api_lib:Trailing Stop Triggered for LONG position: Offset 10.0
 Sending sell order for -2100 at 9553.5 , order type: market
 INFO:bmexlib.bitmex_api_lib:Sell triggered | Price: 9553.50000000 | Stop loss: 9557.00000000
 
