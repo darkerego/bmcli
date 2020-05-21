@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
+# Darkerego ~ 2019 - 2020
 """
 BitMex API TOOL -- Python3 powered CLI tool to make manual bitmex trading easier.
-Features include: get account balance and position, create a new order,
+Features include: get account balance and position, create a new order.
 Donations are appreciated: BTC: 16XCgQyNxoYmduCxWBoVQwk8QgLw6dZ8De
 """
 import argparse
