@@ -30,6 +30,12 @@ so that it is at the top of the orderbook to ensure not paying the market fee an
 entering a position. Optionally use `chase_failsafe` to revert to a market order 
 if the `max chase` variable is exceeded. 
 
+## Install Deps:
+
+<pre>
+$ pip3 install -r requirements.txt
+</pre>
+
 ## Usage:
 
 <pre>
