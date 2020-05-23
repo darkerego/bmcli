@@ -182,5 +182,7 @@ INFO:bmexlib.bitmex_api_lib:Trailing Stop Triggered for LONG position: Offset 10
 Sending sell order for -2100 at 9553.5 , order type: market
 INFO:bmexlib.bitmex_api_lib:Sell triggered | Price: 9553.50000000 | Stop loss: 9557.00000000
 
+
+[![asciicast](https://asciinema.org/a/bOtzGkjuHNKGo5kEnAWWoOimH.svg)](https://asciinema.org/a/bOtzGkjuHNKGo5kEnAWWoOimH)
 </pre>
 
