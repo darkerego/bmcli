@@ -83,7 +83,7 @@ $ . venv/bin/activate
 ###### Check Balance:
 
 <pre>
-$ ./bmcli -b
+$ python3 ./bmcli -b
 [+] Balance: 1417332
 </pre>
 
@@ -92,7 +92,7 @@ $ ./bmcli -b
 ###### Get Current position
 
 <pre>
-$ ./bmcli -p -s ETHUSD
+$ python3 ./bmcli -p -s ETHUSD
 [+] Position: 2000
 </pre>
 
@@ -108,7 +108,7 @@ Sending buy order for 100.0 at 9525.0 , order type: limit
 ###### Order Chase
 
 <pre>
-$ ./bmcli -c -q 100 -M 1
+$ python3 ./bmcli -c -q 100 -M 1
 INFO:exchange_lib.bitmex_ws:Connecting to wss://www.bitmex.com/realtime?subscribe=execution:XBTUSD,instrument:XBTUSD,order:XBTUSD,position:XBTUSD,quote:XBTUSD,trade:XBTUSD,margin
 INFO:exchange_lib.bitmex_ws:Authenticating with API Key.
 INFO:exchange_lib.bitmex_ws:Connected to WS.
@@ -126,7 +126,7 @@ INFO:lib.bitmex_api_lib:Order Filled
 ###### Trailing Stop
 
 <pre>
-./bmcli -t 10
+$ python3./bmcli -t 10
 [+] Initializing Trailing Stop with offset: 10.0
 INFO:exchange_lib.bitmex_ws:Connecting to wss://www.bitmex.com/realtime?subscribe=execution:XBTUSD,instrument:XBTUSD,order:XBTUSD,position:XBTUSD,quote:XBTUSD,trade:XBTUSD,margin
 INFO:exchange_lib.bitmex_ws:Authenticating with API Key.
@@ -157,7 +157,7 @@ INFO:bmexlib.bitmex_api_lib:Sell triggered | Price: 9553.50000000 | Stop loss: 9
 ###### AutoStop
 
 <pre>
-$ ./bmcli -a 0.001 0.005 10
+$ python3 ./bmcli -a 0.001 0.005 10
 [i] AutoStop: Stop Loss 0.01, Enable Trailing Stop: 0.005, Trail Offset: 10.0
 INFO:exchange_lib.bitmex_ws:Connecting to wss://www.bitmex.com/realtime?subscribe=execution:XBTUSD,instrument:XBTUSD,order:XBTUSD,position:XBTUSD,quote:XBTUSD,trade:XBTUSD,margin
 INFO:exchange_lib.bitmex_ws:Authenticating with API Key.
