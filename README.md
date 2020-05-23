@@ -121,7 +121,7 @@ INFO:lib.bitmex_api_lib:Order Filled
 
 </pre>
 See <a href='https://asciinema.org/a/Ctn7upSmaIuhhJOXEBxBZMYoi'>Asciinema Recording</a> here.
-
+<script id="asciicast-Ctn7upSmaIuhhJOXEBxBZMYoi" src="https://asciinema.org/a/Ctn7upSmaIuhhJOXEBxBZMYoi.js" async></script>
 
 ###### Trailing Stop
 
