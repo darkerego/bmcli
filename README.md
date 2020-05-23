@@ -151,8 +151,7 @@ INFO:bmexlib.bitmex_api_lib:Sell triggered | Price: 9553.50000000 | Stop loss: 9
 </pre>
 <p>
 
-See <a href='https://asciinema.org/a/RUySuh40ObfavX7qxw8yafRSP'>Asciinema Recording</a> here.
-</p>
+[![asciicast](https://asciinema.org/a/RUySuh40ObfavX7qxw8yafRSP.svg)](https://asciinema.org/a/RUySuh40ObfavX7qxw8yafRSP)</p>
 
 
 ###### AutoStop
