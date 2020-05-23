@@ -120,8 +120,8 @@ INFO:lib.bitmex_api_lib:Chasing buy order c2e7fee0-20af-3f5d-a7b9-c22d49de2c19, 
 INFO:lib.bitmex_api_lib:Order Filled
 
 </pre>
-See <a href='https://asciinema.org/a/Ctn7upSmaIuhhJOXEBxBZMYoi'>Asciinema Recording</a> here.
-<script id="asciicast-Ctn7upSmaIuhhJOXEBxBZMYoi" src="https://asciinema.org/a/Ctn7upSmaIuhhJOXEBxBZMYoi.js" async></script>
+
+[![asciicast](https://asciinema.org/a/Ctn7upSmaIuhhJOXEBxBZMYoi.svg)](https://asciinema.org/a/Ctn7upSmaIuhhJOXEBxBZMYoi)
 
 ###### Trailing Stop
 
