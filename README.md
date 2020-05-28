@@ -38,7 +38,7 @@ $ pip3 install -r requirements.txt
 
 ## Usage:
 
-<pre>
+
 #BMCLI - Bitmex Api Tool
 
 ~ Darkerego, 2019 - 2020
@@ -78,6 +78,7 @@ $ pip3 install -r requirements.txt
 </pre>
 
 ## Usage:
+
 
 <pre>
 $ ./bmcli.py -h
@@ -141,6 +142,7 @@ First, edit `lib/conf.py` and add your api keys. Next, it is stronly recommended
 to activate the virtual env because I have modified the libraries to stop those 
 stupid swagger client warnings:
 </p>
+
 <pre>
 $ . venv/bin/activate
 </pre>
