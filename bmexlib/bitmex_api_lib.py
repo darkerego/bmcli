@@ -5,9 +5,9 @@ import json
 from exchange_lib.bitmex_ws import BitMEXWebsocket
 import logging
 import datetime
-
-
-logging.basicConfig(level=logging.INFO)
+from colorama import Fore, Back, Style, init
+logging.basicConfig(level=logging.INFO, format=(Fore.BLUE + '[+] ' + Style.RESET_ALL + '%(message)s '))
+init(autoreset=True)
 
 def timestamp():
     """
@@ -16,15 +16,14 @@ def timestamp():
     """
     ts = time.time()
     st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-    return str(st)
-
-
+    return str(f'[{st}]')
 
 
 class BitmexApiTool:
     """
     Bitmex Functions Library
     """
+
     def __init__(self, symbol='XBTUSD', api_key=None, api_secret=None, test_net=False, require_ws=False):
         self.triggered = False
         self.symbol = symbol
@@ -35,21 +34,21 @@ class BitmexApiTool:
         self.logger = logging.getLogger(__name__)
         self.ws = None
 
-
         if self.test_net:
             self.client = bitmex.bitmex(test=True, api_key=self.api_key, api_secret=self.api_secret)
             if self.require_ws:
                 self.ws = BitMEXWebsocket(endpoint="https://testnet.bitmex.com/api/v1", symbol=self.symbol,
-                                     api_key=self.api_key, api_secret=api_secret)
+                                          api_key=self.api_key, api_secret=api_secret)
 
         else:
 
             self.client = bitmex.bitmex(test=False, api_key=self.api_key, api_secret=self.api_secret)
             if self.require_ws:
-                self.ws = BitMEXWebsocket(endpoint="https://www.bitmex.com/api/v1", symbol=self.symbol, api_key=self.api_key,
-                                     api_secret=self.api_secret)
+                self.ws = BitMEXWebsocket(endpoint="https://www.bitmex.com/api/v1", symbol=self.symbol,
+                                          api_key=self.api_key,
+                                          api_secret=self.api_secret)
 
-    def monitor_ws(self, endpoint):
+    def monitor_ws(self, endpoint='https://www.bitmex.com/api/v1'):  #TODO: implement
         """
         monitor the websocket for lag and restart if lag is detected, if signals come in while websocket
         is restarting, then bot will resort to rest api via self.ws_restarting parameter
@@ -59,8 +58,8 @@ class BitmexApiTool:
         restart_count = 0
         while True:
             if not started or self.ws.exited or self.ws is None:
-                self.ws = BitMEXWebsocket(endpoint="https://www.bitmex.com/api/v1", symbol=self.symbol,
-                                          api_key=api_key, api_secret=api_secret)
+                self.ws = BitMEXWebsocket(endpoint=endpoint, symbol=self.symbol,
+                                          api_key=self.api_key, api_secret=self.api_secret)
                 time.sleep(1)
                 if self.ws.started:
                     self.logger.info('Websocket is running.')
@@ -84,7 +83,6 @@ class BitmexApiTool:
         elif symbol == "ETHUSD":
             return round(number * 20.0) / 20.0
 
-
     def get_balance(self):
         """
         ({'account': 1428629, 'currency': 'XBt', 'riskLimit': 1000000000000, 'prevState': '', 'state': '', 'action': '',
@@ -101,6 +99,12 @@ class BitmexApiTool:
         """
         return self.client.User.User_getMargin().result()[0]['walletBalance']
 
+    def get_raw(self):
+        """
+        Raw margain data
+        @return:
+        """
+        return self.client.User.User_getMargin().result()[0]
 
     def get_position(self):
         # self.logger.info('getting positions')
@@ -110,7 +114,7 @@ class BitmexApiTool:
                     response = self.client.Position.Position_get(filter=json.dumps({'symbol': self.symbol})).result()
                     if response and len(response[0]):
                         self.logger.debug('Positions {}'.format(response[0][0]))
-                        #p = (response[0][0]['openingQty'] + response[0][0]['execQty'])
+                        # p = (response[0][0]['openingQty'] + response[0][0]['execQty'])
                         p = response[0][0]
                         return p
                     else:
@@ -124,7 +128,6 @@ class BitmexApiTool:
         else:
             p = 0
 
-
     def ws_orders(self, orderID):
         orders = self.ws.open_orders('')
         if orders.__len__():
@@ -132,7 +135,6 @@ class BitmexApiTool:
                 if o['orderID'] == orderID:
                     return o
         return None
-
 
     def rest_open_order(self, orderID=None):
         """
@@ -146,7 +148,6 @@ class BitmexApiTool:
             return o.result()[0]
         return None
 
-
     def get_quote(self):
         try:
             q = self.client.OrderBook.OrderBook_getL2(symbol=self.symbol, depth=1).result()
@@ -155,7 +156,6 @@ class BitmexApiTool:
         except Exception as ex:
             self.logger.error('error in quote')
             self.logger.error(ex)
-
 
     def send_order(self, oq, ot, price=None, stopPx=0.0, pegOffsetValue=0, text='bmx_api_tool'):
         if price is None:
@@ -171,7 +171,7 @@ class BitmexApiTool:
                 side = 'sell'
                 price = quote['sell']
             if price > 0:
-                print(f'Sending {side} order for {oq} at {price} , order type: {ot}')
+                self.logger.info(f'Sending {side} order for {oq} at {price} , order type: {ot}')
         if ot == 'post':
             response = self.client.Order.Order_new(
                 symbol=self.symbol,
@@ -226,7 +226,6 @@ class BitmexApiTool:
             ).result()
         return response
 
-
     def limit_chase(self, oq, max_chase=3.0, failsafe=False, double_check=False):
         """"
         Attempt to fill a limit order (to earn the rebate and avoid paying the market fee) by chasing the order up the
@@ -247,7 +246,7 @@ class BitmexApiTool:
         time.sleep(1)
         count = 0
         while True:
-            count +=1
+            count += 1
             o = self.ws_orders(order_id)
             if o:
                 if side == 'Buy':
@@ -314,16 +313,13 @@ class BitmexApiTool:
                 self.logger.info('Order Filled')
                 break
 
-
-    def trailing_stop(self, offset=25):
+    def trailing_stop(self, offset=25, ts_o_type='market', tschase=False, max_chase=None):
         """
          Place a trailing stop order to ensure profit is taken from current position,
          Stop direction determined by current position, so there is no need to pass a negative offset, but
          if the user does then we correct it by `offset * -1`
         :param offset: integer representing how many dollars to trail the stop behind the current position
         """
-        #if offset < 0:  # correct input
-        #    offset = offset * -1
 
         pos = self.get_position()
         entry_price = pos['avgEntryPrice']
@@ -333,7 +329,7 @@ class BitmexApiTool:
             # long position, so this will be a sell stop
             buy_price = self.ws.get_ticker()['sell']
             offset_price = float(buy_price) - float(offset)
-            text = 'Trailing sell stop for long position'
+            text = f'Trailing sell stop for long position, type {ts_o_type}'
             qty = qty * -1
             side = 'Sell'
             self.logger.info(
@@ -343,7 +339,7 @@ class BitmexApiTool:
             # short position, so this will be a buy stop
             buy_price = self.ws.get_ticker()['buy']
             offset_price = float(buy_price) + float(offset)
-            text = 'Trailing buy stop for short position'
+            text = f'Trailing buy stop for short position, type {ts_o_type}'
             qty = qty * -1
             side = 'Buy'
             self.logger.info(
@@ -358,9 +354,18 @@ class BitmexApiTool:
                     self.logger.info("New high observed: %.8f Updating stop loss to %.8f" % (sell_price, offset_price))
                 elif float(sell_price) <= float(offset_price):
                     sell_price = self.ws.get_ticker()['sell']
-                    ret = self.send_order(oq=qty, ot='market', text=text)
-                    self.logger.info("Sell triggered | Price: %.8f | Stop loss: %.8f" % (sell_price, offset_price))
-                    self.logger.debug(ret)
+                    if tschase:
+                        self.logger.info(f'Chasing sell order ... max chase: {max_chase}')
+                        self.logger.info("Sell triggered: %s | Price: %.8f | Stop loss: %.8f" % (ts_o_type, sell_price,
+                                                                                                 offset_price))
+                        chaser = threading.Thread(target=self.limit_chase, args=(qty, max_chase, True))
+                        chaser.start()
+                    else:
+                        self.logger.info("Sell triggered: %s | Price: %.8f | Stop loss: %.8f" % (ts_o_type, sell_price,
+                                                                                                 offset_price))
+                        ret = self.send_order(oq=qty, ot=ts_o_type, text=text)
+                        self.logger.debug(ret)
+
                     self.triggered = False
                     break
 
@@ -369,16 +374,24 @@ class BitmexApiTool:
                 if (float(buy_price) + float(offset)) < float(offset_price):
                     offset_price = float(buy_price) + float(offset)
                     self.logger.info("New low observed: %.8f Updating stop loss to %.8f" % (buy_price, offset_price))
-                elif buy_price >= offset_price:
+                elif float(buy_price) >= float(offset_price):
                     buy_price = self.ws.get_ticker()['buy']
-                    ret = self.send_order(oq=qty, ot='market', text=text)
-                    self.logger.info("Buy triggered | Price: %.8f | Stop loss: %.8f" % (buy_price, offset_price))
-                    self.logger.debug(ret)
+                    if tschase:
+                        self.logger.info(f'Chasing buy order ... max chase: {max_chase}')
+                        self.logger.info("Sell triggered: %s | Price: %.8f | Stop loss: %.8f" % (ts_o_type, buy_price,
+                                                                                                 offset_price))
+                        chaser = threading.Thread(target=self.limit_chase, args=(qty, max_chase, True))
+                        chaser.start()
+                    else:
+                        self.logger.info("Sell triggered: %s | Price: %.8f | Stop loss: %.8f" % (ts_o_type, buy_price,
+                                                                                                 offset_price))
+                        ret = self.send_order(oq=qty, ot=ts_o_type, text=text)
+                        self.logger.debug(ret)
+
                     self.triggered = False
                     break
 
-
-    def auto_stop(self, stop_loss=0.01, enable_trailing_stop=0.01, trail_offset=25):
+    def auto_stop(self, symbol='XBTUSD', stop_loss=0.01, enable_trailing_stop=0.01, trail_offset=25.0):
         """
         Automatic Stop Loss & Trailing Stop For Open Position
         @param stop_loss: Set a stop loss at 30% (default) above/below entry price
@@ -386,15 +399,18 @@ class BitmexApiTool:
         @param trail_offset: Close position if price drops by this amount of dollars
         @return: none
         """
+
         open_position = False
         count = 0
+        high = 0
+        diff = 0
         while True:
 
             posQty = self.get_position()['openingQty'] + self.get_position()['execQty']
             if posQty == 0:
                 count += 1
                 if open_position:
-                    self.client.Order.Order_cancelAll(symbol=self.symbol).result()
+                    self.client.Order.Order_cancelAll(symbol=symbol).result()
                     open_position = False
                 if count == 10:
                     self.logger.info('No position open.')
@@ -406,26 +422,40 @@ class BitmexApiTool:
                 ts = timestamp()
                 entry_price = self.get_position()['avgEntryPrice']
                 last_price = self.ws.get_ticker()['last']
-                self.logger.info(f'Time: {ts}, Position: {posQty}, Entry Price: {entry_price}, Current Price: {last_price}')
+                if last_price > high:
+                    high = last_price
+
+
+                self.logger.info(Fore.RED + '[ ' + Style.RESET_ALL +
+                                    f'Autostop Running: Params: {stop_loss}|{enable_trailing_stop}|{trail_offset} '
+                                    f'High: {high}, Diff: {diff}'
+                                    + Fore.RED + ' ]' + Style.RESET_ALL)
+                self.logger.info(
+                    f'Time: {ts}, Position: {posQty}, Entry Price: {entry_price}, Current Price: {last_price}')
                 if posQty > 0:  # long
                     stop_loss_price = entry_price - (entry_price * (1 * stop_loss))
                     trailing_stop_price = entry_price + (entry_price * (1 * enable_trailing_stop))
                 else:  # elif posQty < 0:  # short
                     stop_loss_price = entry_price + (entry_price * (1 * stop_loss))
                     trailing_stop_price = entry_price - (entry_price * (1 * enable_trailing_stop))
-                self.logger.info(f'Stop Loss Price: {stop_loss_price}, Trailing Stop Enable: {trailing_stop_price}')
+                self.logger.info(f'Stop Loss: {stop_loss_price}, Trailing Stop: {trailing_stop_price}')
 
                 open_orders = self.rest_open_order()
                 # stop loss
                 has_stop = False
                 for order in open_orders:
-                    # print(order)
-                    if order['ordType'] == 'Stop':
-                        has_stop = True
-                if not has_stop:
+                    print(order)
+                    if order['ordType'] == 'Stop' and order['symbol'] == symbol:
+                        oid = order['orderID']
+                        if float(order['orderQty']) == float(posQty) or float(order['orderQty']) == (float(posQty * -1)):
+                            has_stop = True
+                        else:
+                            self.client.Order.Order_cancel(orderID=oid).result()
 
+                if not has_stop:
                     stopQty = posQty * -1
-                    stop_loss_price = self.rounded_price(stop_loss_price, self.symbol)
+                    stop_loss_price = self.rounded_price(stop_loss_price, symbol)
+                    self.logger.info('Setting a stop loss ...')
                     self.send_order(oq=stopQty, ot='Stop', price=None, stopPx=stop_loss_price)
                 # trailing stop
                 if not self.triggered:
@@ -434,7 +464,7 @@ class BitmexApiTool:
                         if float(price) >= float(trailing_stop_price):
                             offset_price = float(price) - float(trail_offset)
                             self.logger.info(f'Trailing Stop Triggered for LONG position: Offset {offset_price}')
-                            ts = threading.Thread(target=self.trailing_stop, args=(trail_offset, ))
+                            ts = threading.Thread(target=self.trailing_stop, args=(trail_offset,))
                             ts.start()
                             self.triggered = True
                     if posQty < 0:
@@ -447,6 +477,35 @@ class BitmexApiTool:
                             self.triggered = True
             time.sleep(10)
 
+    def auto_stop_multi(self, symbols=None, stop_loss=0.1, enable_trailing_stop=0.01, trail_offset_interval=3.0):
+        """
+        #TODO: finish implementing
+        @param symbols:
+        @param stop_loss:
+        @param enable_trailing_stop:
+        @param trail_offset_interval:
+        @return:
+        """
 
+        if symbols is None:
+            symbols = []
+        else:
 
+            try:
+                for s in symbols:
+                    self.logger.info(f'Started a thread for symbol {s}')
+                    if s == 'ETHUSD':
+                        trail_offset = trail_offset_interval * 0.05
+                    elif s == 'XBTUSD':
+                        trail_offset = trail_offset_interval * 0.5
+                    else:
+                        self.logger.error(f'Unsupported symbol: {s}')
+                        return False
 
+                    s = threading.Thread(target=self.auto_stop,
+                                           args=(s, stop_loss, enable_trailing_stop, trail_offset,))
+
+                    s.start()
+            except KeyboardInterrupt:
+                for s in symbols:
+                    s.join()

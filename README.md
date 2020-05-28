@@ -39,35 +39,59 @@ $ pip3 install -r requirements.txt
 ## Usage:
 
 <pre>
-$ ./bmcli -h
-usage: bmcli [-h] [-b] [-p]
-             [-o {limit,market,post,stop,stop_limit,limit_if_touched}] [-c]
-             [-F] [-M MAX_CHASE] [-t TRAILING_STOP]
-             [-a AUTOSTOP AUTOSTOP AUTOSTOP] [-s SYMBOL] [-q QUANTITY]
+$ ./bmcli.py -h
+usage: Please see the README.md file on https://github.com/isdrupter/bmcli
 
 optional arguments:
   -h, --help            show this help message and exit
+
+Rest API Functions:
   -b, --balance         Get Balance
   -p, --position        Get Position
+  -P PNL, --pnl PNL     Get Un/Realized PNL of specified symbol <--pnl XBTUSD>
+
+General Options:
+  -s SYMBOL, --symbol SYMBOL
+                        Symbol of instrument
+  -k, --keys            Use instrument dict from conf.py to determinewhich api
+                        keys to use
+
+Flags for creating orders.:
   -o {limit,market,post,stop,stop_limit,limit_if_touched}, --order {limit,market,post,stop,stop_limit,limit_if_touched}
                         Place an order
-  -c, --chase           Limit Order Chase
+  -q QUANTITY, --qty QUANTITY, -oq QUANTITY
+                        Quantity for orders placed. Use negative value to open
+                        a short position.
+  --price PRICE, -op PRICE
+                        Price for limit or post orders (if required.
+  --stop_px STOP_PX     Stop price for stop orders.
+  --peg PEGOFFSETVALUE, --pegoffsetvalue PEGOFFSETVALUE
+                        PegOffsetValue for LimitIfTouched orders.
+
+Order Chasing:
+  -c CHASE, --chase CHASE
+                        Limit Order Chase this quantity <--chase -100 -s
+                        ETHUSD>
   -F, --chase_failsafe  Revert to market if max chase exceeded.
   -M MAX_CHASE, --max_chase MAX_CHASE
-                        Max limit chase
+                        Max limit chase in dollar value.
+
+Auto/Trailing Stop Options:
   -t TRAILING_STOP, --trailing_stop TRAILING_STOP
-                        Place a trailing stop order with this offset.
+                        Place a trailing stop order with this offset. <-t
+                        10.0>
   -a AUTOSTOP AUTOSTOP AUTOSTOP, --auto_stop AUTOSTOP AUTOSTOP AUTOSTOP
                         Autostop Loss, Trailing Stop. Example -a 0.015 0.03 25
                         (Stop loss at 15 percent +/- entry price, enable
                         trailing stop at 30 percent +/- entry price, close
                         position when price drops 25 dollars +/- trailing stop
                         price.) See documentation for more details.
-  -s SYMBOL, --symbol SYMBOL
-                        Symbol self.of instrument
-  -q QUANTITY, --qty QUANTITY
-                        Quantity for orders placed. Use negative value to open
-                        a short position. 
+  -l, --limit_order, --limit
+                        Use limit orders for trailing stops. Warning: not
+                        recommended except for experienced traders.
+  -C CHASE_TS, --chase_ts CHASE_TS
+                        Use limit order chasing with trailing stops. Specify
+                        max chase like <-C 3.0>
 
 </pre>
 
