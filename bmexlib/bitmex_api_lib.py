@@ -157,6 +157,12 @@ class BitmexApiTool:
             self.logger.error('error in quote')
             self.logger.error(ex)
 
+    def get_pnl(self):
+        pnl = self.get_raw()
+        realized = pnl['realisedPnl']
+        unrealized = pnl['unrealisedPnl']
+        return realized, unrealized
+
     def send_order(self, oq, ot, price=None, stopPx=0.0, pegOffsetValue=0, text='bmx_api_tool'):
         if price is None:
             if self.ws:
@@ -420,31 +426,38 @@ class BitmexApiTool:
 
                 open_position = True
                 ts = timestamp()
+                (r, u) = self.get_pnl()
+                r = float(r) * 0.00000001
+                u = float(u) * 0.00000001
+                bal = float(self.get_balance()) * 0.00000001
                 entry_price = self.get_position()['avgEntryPrice']
                 last_price = self.ws.get_ticker()['last']
                 if last_price > high:
                     high = last_price
 
 
-                self.logger.info(Fore.RED + '[ ' + Style.RESET_ALL +
-                                    f'Autostop Running: Params: {stop_loss}|{enable_trailing_stop}|{trail_offset} '
-                                    f'High: {high}, Diff: {diff}'
-                                    + Fore.RED + ' ]' + Style.RESET_ALL)
+
+                self.logger.info(f'[ Params: {stop_loss}|{enable_trailing_stop}|{trail_offset}] | '
+                                 + f'[ High: {high}|Diff: {diff} ]')
+                self.logger.info(Fore.RED + f'[ Unrealized PNL: {u}' + Style.RESET_ALL + ' | ' + Fore.GREEN +
+                                 f'Realized PNL: {r} ' + Style.RESET_ALL + ' | ' + Fore.BLUE + f'Balance: {bal}'
+                                 + Fore.RED + ' ]')
                 self.logger.info(
-                    f'Time: {ts}, Position: {posQty}, Entry Price: {entry_price}, Current Price: {last_price}')
+                    f'{ts}, [ Position: {posQty} | Entry Price: {entry_price} ]')
                 if posQty > 0:  # long
                     stop_loss_price = entry_price - (entry_price * (1 * stop_loss))
                     trailing_stop_price = entry_price + (entry_price * (1 * enable_trailing_stop))
+                    diff = float(trailing_stop_price) - float(last_price)
                 else:  # elif posQty < 0:  # short
                     stop_loss_price = entry_price + (entry_price * (1 * stop_loss))
                     trailing_stop_price = entry_price - (entry_price * (1 * enable_trailing_stop))
-                self.logger.info(f'Stop Loss: {stop_loss_price}, Trailing Stop: {trailing_stop_price}')
+                    diff = float(last_price) - float(trailing_stop_price)
+                self.logger.info(f'[ Stop Loss: {stop_loss_price} | Current Price: {last_price} | Trailing Stop: {trailing_stop_price} ]')
 
                 open_orders = self.rest_open_order()
                 # stop loss
                 has_stop = False
                 for order in open_orders:
-                    print(order)
                     if order['ordType'] == 'Stop' and order['symbol'] == symbol:
                         oid = order['orderID']
                         if float(order['orderQty']) == float(posQty) or float(order['orderQty']) == (float(posQty * -1)):

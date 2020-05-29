@@ -7,9 +7,109 @@ BitMex API TOOL -- Python3 powered CLI tool to make manual bitmex trading easier
 Features include: get account balance and position, create a new order,
 """
 import argparse
+from time import sleep
+
 from bmexlib.bitmex_api_lib import BitmexApiTool
-from bmexlib.conf import *
+from bmexlib.conf import testnet, api_key, api_secret, keys
 from bmexlib.colorprint import ColorPrint
+
+
+class BitmexLogic:
+    """
+    Functions for everything the frontend does!
+    """
+    def __init__(self, symbol='XBTUSD', require_ws=False):
+
+        self.symbol = symbol
+        self.require_ws = require_ws
+        if self.require_ws:
+            self.api = BitmexApiTool(symbol=self.symbol, api_key=api_key, api_secret=api_secret, test_net=testnet,
+                                     require_ws=True)
+        else:
+            self.api = BitmexApiTool(symbol=self.symbol, api_key=api_key, api_secret=api_secret, test_net=testnet,
+                                     require_ws=False)
+
+    def monitor_account(self, symbol='XBTUSD'):
+
+        while True:
+            try:
+
+                bal = self.api.get_balance()
+                pos = self.api.get_position()
+                pnl = self.api.get_raw()
+                cp.green(f'Instrument: {symbol}')
+                cp.green(f'Balance: {bal}')
+                pos_qty = pos['openingQty'] + pos['execQty']
+                cp.green(f'Position: {pos_qty}')
+                if args.verbose:
+                    cp.cyan(f'Raw: {pnl}')
+                prev_realized = pnl['prevRealisedPnl']
+                realized = pnl['realisedPnl']
+                unrealized = pnl['unrealisedPnl']
+                cp.red(f'Unrealized PNL: {unrealized}')
+                cp.green(f'Realized PNL: {realized}')
+                cp.yellow(f'Previous PNL: {prev_realized}')
+                cp.blue('-------------------------------------------')
+            except KeyboardInterrupt:
+                cp.red('Exiting...')
+            else:
+                sleep(5)
+
+    def balance(self):
+        bal = self.api.get_balance()
+        if bal == 0:
+            cp.red('Zero balance available!')
+        else:
+            cp.green(f'Balance: {bal}')
+
+    def position(self):
+        pos = self.api.get_position()
+
+        if pos == 0:
+            cp.red(f'No position for {self.symbol}')
+            exit(0)
+        pos_qty = pos['openingQty'] + pos['execQty']
+        cp.green(f'Position: {pos_qty}')
+
+    def pnl(self, _symbol):
+        pnl = self.api.get_raw()
+        prev_realized = pnl['prevRealisedPnl']
+        realized = pnl['realisedPnl']
+        unrealized = pnl['unrealisedPnl']
+        cp.green(f'Instrument: {_symbol}: Unrealized PNL: {unrealized}, Realized PNL: {realized}, Prev_realized: '
+                 f'{prev_realized}')
+
+    def create_order(self):
+        cp.green(f'Creating new order of type {args.new_order}...')
+        api = BitmexApiTool(symbol=self.symbol, api_key=api_key, api_secret=api_secret, test_net=testnet,
+                            require_ws=False)
+        cp.cyan(api.send_order(oq=args.quantity, ot=args.new_order, price=args.price, stopPx=args.stop_px,
+                               pegOffsetValue=args.pegoffsetvalue))
+
+    def chase_order(self):
+        cp.green(f'Chasing order of qty {args.chase[0]}')
+        self.api.limit_chase(oq=args.chase[0], max_chase=args.max_chase, failsafe=args.failsafe, double_check=False)
+
+    def trail(self):
+        if args.chase_ts is not None:
+            max_chase_ts = float(args.chase_ts[0])
+        else:
+            max_chase_ts = None
+        offset = float(args.trailing_stop_order[0])
+        cp.green(f'Initializing Trailing Stop with offset: {offset}, Order Chase: {args.cts}')
+        api = BitmexApiTool(symbol=args.symbol, api_key=api_key, api_secret=api_secret, test_net=testnet,
+                            require_ws=True)
+        api.trailing_stop(offset=offset, ts_o_type=args.ts_type, tschase=args.cts, max_chase=max_chase_ts)
+
+    def auto_stop_poll(self):
+        stop_loss = args.autostop[0]
+        enable_ts = args.autostop[1]
+        trail_offset = args.autostop[2]
+        cp.yellow(f'AutoStop: Stop Loss {stop_loss}, Enable Trailing Stop: {enable_ts}, Trail Offset: {trail_offset}')
+        api = BitmexApiTool(symbol=self.symbol, api_key=api_key, api_secret=api_secret, test_net=testnet,
+                            require_ws=True)
+        api.auto_stop(symbol=args.symbol, stop_loss=stop_loss, enable_trailing_stop=enable_ts,
+                      trail_offset=trail_offset)
 
 
 def parse_args():
@@ -25,16 +125,21 @@ def parse_args():
     general_opts.add_argument('-k', '--keys', dest='use_curr_keys', default=True,
                               help='Use instrument dict from conf.py to determine'
                               'which api keys to use', action='store_true')
+    general_opts.add_argument('-v', '--verbose', dest='verbose', action='store_true')
     rest_api.add_argument('-b', '--balance', dest='balance', action='store_true', help='Get Balance')
     rest_api.add_argument('-p', '--position', dest='position', action='store_true', help='Get Position')
     rest_api.add_argument('-P', '--pnl', dest='pnl', action='store', nargs=1, type=str,
                           help='Get Un/Realized PNL of specified symbol <--pnl XBTUSD>')
+    monitor_opts = parser.add_argument_group('Various tools for monitoring trading')
+    monitor_opts.add_argument('-m', '--monitor', dest='monitor_acct', action='store', nargs=1, help='Monitor account'
+                                                                                                    'instrument'
+                                                                                                    'activity.')
     order_opts = parser.add_argument_group('Flags for creating orders.')
     order_opts.add_argument('-o', '--order', dest='new_order', help='Place an order', type=str,
                             choices=['limit', 'market', 'post', 'stop', 'stop_limit', 'limit_if_touched'])
     order_opts.add_argument('-q', '--qty', '-oq', dest='quantity', type=float, help='Quantity for orders placed. '
-                                                                                    'Use negative value to open a short '
-                                                                                    'position.')
+                                                                                    'Use negative value to open a '
+                                                                                    'short position.')
     order_opts.add_argument('--price', '-op', dest='price', type=float, default=None,
                             help='Price for limit or post orders (if required.')
     order_opts.add_argument('--stop_px', dest='stop_px', type=float, default=None, help='Stop price for stop orders.')
@@ -62,7 +167,9 @@ def parse_args():
     stop_opts.add_argument('-C', '--chase_ts', dest='chase_ts', action='store',
                            help='Use limit order chasing with trailing stops. Specify max chase like <-C 3.0>',
                            nargs=1, type=float)
-
+    scalp_opts = parser.add_argument_group('Options for Experimental Scalping')
+    scalp_opts.add_argument('--scalp', action='store', nargs=1, type=float, help='Experimental scalping engine')
+    # scalp_opts.add_argument('-')
     return parser.parse_args()
 
 
@@ -70,39 +177,24 @@ def main():
     """
     Main logic here
     """
-    global api_key, api_secret
+    global api_key, api_secret, args
     args = parse_args()  # define args
-    balance = args.balance
-    position = args.position
-    new_order = args.new_order
-    price = args.price
-    stop_px = args.stop_px
-    pegoffsetvalue = args.pegoffsetvalue
-    chase = args.chase
-    chase_ts = args.chase_ts
-    failsafe = args.failsafe
-    max_chase = args.max_chase
-    trailing_stop_order = args.trailing_stop
-    autostop = args.autostop
     symbol = args.symbol
-    quantity = args.quantity
-    use_limit_order = args.use_limit_order
-    get_pnl = args.pnl
-    use_curr_keys = args.use_curr_keys
-    """if use_curr_keys:
-        if symbol == 'XBTUSD':
+
+    if args.use_curr_keys:
+        if args.symbol == 'XBTUSD':
             api_key = keys[0][0]['XBTUSD']['key']
             api_secret = keys[0][0]['XBTUSD']['secret']
-        if symbol == 'ETHUSD':
+        if args.symbol == 'ETHUSD':
             api_key = keys[1][0]['ETHUSD']['key']
-            api_secret = keys[1][0]['ETHUSD']['secret']"""
-    if use_limit_order:
+            api_secret = keys[1][0]['ETHUSD']['secret']
+    if args.use_limit_order:
         ts_type = 'limit'
     else:
         ts_type = 'market'
 
-    if chase_ts:
-        cp.red(f'Warn: Limit chasing for trailing stops is enabled with max chase {chase_ts[0]}.')
+    if args.chase_ts:
+        cp.red(f'Warn: Limit chasing for trailing stops is enabled with max chase {args.chase_ts[0]}.')
         cts = True
     else:
         cts = False
@@ -111,60 +203,33 @@ def main():
     Main functionality % logic
     """
 
-    if balance:
-        api = BitmexApiTool(symbol=symbol, api_key=api_key, api_secret=api_secret, test_net=testnet, require_ws=False)
-        bal = api.get_balance()
-        if bal == 0:
-            cp.red('Zero balance available!')
-        else:
-            cp.green(f'Balance: {bal}')
-
-    if position:
-        api = BitmexApiTool(symbol=symbol, api_key=api_key, api_secret=api_secret, test_net=testnet, require_ws=False)
-        pos = api.get_position()
-        if pos == 0:
-            cp.red(f'No position for {symbol}')
-            exit(0)
-        pos_qty = pos['openingQty'] + pos['execQty']
-        cp.green(f'Position: {pos_qty}')
-
-    if get_pnl:
-        _symbol = get_pnl[0]
-        api = BitmexApiTool(symbol=_symbol, api_key=api_key, api_secret=api_secret, test_net=testnet, require_ws=False)
-        pnl = api.get_raw()
-        prev_realized = pnl['prevRealisedPnl']
-        realized = pnl['realisedPnl']
-        unrealized = pnl['unrealisedPnl']
-        cp.green(f'Instrument: {_symbol}: Unrealized PNL: {unrealized}, Realized PNL: {realized}, Prev_realized: '
-                 f'{prev_realized}')
-
-    if new_order:
-        cp.green(f'Creating new order of type {new_order}...')
-        api = BitmexApiTool(symbol=symbol, api_key=api_key, api_secret=api_secret, test_net=testnet, require_ws=False)
-        cp.cyan(api.send_order(oq=quantity, ot=args.new_order, price=price, stopPx=stop_px,
-                               pegOffsetValue=pegoffsetvalue))
-
-    if chase:
-        api = BitmexApiTool(symbol=symbol, api_key=api_key, api_secret=api_secret, test_net=testnet, require_ws=True)
-        api.limit_chase(oq=chase[0], max_chase=max_chase, failsafe=failsafe, double_check=False)
-
-    if trailing_stop_order:
-        if chase_ts is not None:
-            max_chase_ts = float(chase_ts[0])
-        else:
-            max_chase_ts = None
-        offset = float(trailing_stop_order[0])
-        cp.green(f'Initializing Trailing Stop with offset: {offset}, Order Chase: {cts}')
-        api = BitmexApiTool(symbol=symbol, api_key=api_key, api_secret=api_secret, test_net=testnet, require_ws=True)
-        api.trailing_stop(offset=offset, ts_o_type=ts_type, tschase=cts, max_chase=max_chase_ts)
-
-    if autostop:
-        stop_loss = autostop[0]
-        enable_ts = autostop[1]
-        trail_offset = autostop[2]
-        cp.yellow(f'AutoStop: Stop Loss {stop_loss}, Enable Trailing Stop: {enable_ts}, Trail Offset: {trail_offset}')
-        api = BitmexApiTool(symbol=symbol, api_key=api_key, api_secret=api_secret, test_net=testnet, require_ws=True)
-        api.auto_stop(symbol=symbol, stop_loss=stop_loss, enable_trailing_stop=enable_ts, trail_offset=trail_offset)
+    if args.monitor_acct:
+        bmx = BitmexLogic(symbol=symbol, require_ws=False)
+        bmx.monitor_account(symbol)
+    if args.balance:
+        bmx = BitmexLogic(symbol=symbol, require_ws=False)
+        bmx.balance()
+    if args.position:
+        bmx = BitmexLogic(symbol=symbol, require_ws=False)
+        bmx.position()
+    if args.pnl:
+        bmx = BitmexLogic(symbol=symbol, require_ws=False)
+        _symbol = args.get_pnl[0]
+        bmx.pnl(_symbol)
+    if args.new_order:
+        bmx = BitmexLogic(symbol=symbol, require_ws=False)
+        bmx.create_order()
+    if args.chase:
+        bmx = BitmexLogic(symbol=symbol, require_ws=True)
+        bmx.chase_order()
+    if args.trailing_stop:
+        bmx = BitmexLogic(symbol=symbol, require_ws=True)
+        bmx.trail()
+    if args.autostop:
+        bmx = BitmexLogic(symbol=symbol, require_ws=True)
+        bmx.auto_stop_poll()
+    #if scalp:
+    #    bmx = BitmexLogic(symbol=symbol, require_ws=True)
 
 
 if __name__ == '__main__':

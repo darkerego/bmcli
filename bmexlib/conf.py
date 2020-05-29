@@ -11,7 +11,7 @@ from bmexlib.config_tool import ReadWriteConfig
 
 
 rwc = ReadWriteConfig()
-config = rwc.read_config('config.json')
+config = rwc.read_config('bmexlib/config.json') # <-- ADD YOUR API KEYS TO THIS FILE
 keys = config['config'][0]['keys']
 
 api_key = keys[0][0]['XBTUSD']['key']

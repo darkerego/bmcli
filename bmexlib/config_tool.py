@@ -42,3 +42,10 @@ class ReadWriteConfig:
                     print('Error with your json: ', err)
                 else:
                     print('Test succeeded!')
+
+
+def test():
+    
+    c = ReadWriteConfig()
+    ret = c.read_config()
+    c.pp_json(ret)
