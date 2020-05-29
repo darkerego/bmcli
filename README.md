@@ -96,13 +96,20 @@ Auto/Trailing Stop Options:
 </pre>
 
 <p>
-First, edit `lib/conf.py` and add your api keys. Next, it is stronly recommended 
+First, edit `lib/conf.py` (updated: edit `bmexlib/config.json`) and add your api keys. Next, it is stronly recommended 
 to activate the virtual env because I have modified the libraries to stop those 
 stupid swagger client warnings:
 </p>
 <pre>
 $ . venv/bin/activate
 </pre>
+
+<p>
+Eventually, this program will consist of a deamon that runs the ws and rest api, and an interface, maybe over RCP, MqTT, 
+or whatever to send commands. Currently, you need multiple API keys to run multiple instances/operations with your account 
+at once. I map each api key/secret pair to the instruments, or currencies -- i.e. I have one for XBT and one for ETH. See 
+config.example.json.
+</p>
 
 ###### Check Balance:
 

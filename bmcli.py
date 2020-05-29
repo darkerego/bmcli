@@ -17,6 +17,7 @@ from bmexlib.colorprint import ColorPrint
 class BitmexLogic:
     """
     Functions for everything the frontend does!
+    @param require_ws: load up the websocket
     """
     def __init__(self, symbol='XBTUSD', require_ws=False):
 

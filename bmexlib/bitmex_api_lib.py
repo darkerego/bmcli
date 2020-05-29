@@ -264,8 +264,8 @@ class BitmexApiTool:
                         _price = self.ws.get_ticker()['buy']
                     if count == 100000:
                         self.logger.info(
-                            f'Chasing buy order {order_id}, order_price: {avg}, last_price: {last_price}, current price: '
-                            f'{_price} max chase: {max_chase_buy}')
+                            f'Chasing buy order {order_id}, order_price: {avg}, last_price: {last_price}, '
+                            f'current price: {_price} max chase: {max_chase_buy}')
                         count = 0
                     if float(_price) <= float(max_chase_buy):
                         if float(last_price) < float(_price):
@@ -452,7 +452,9 @@ class BitmexApiTool:
                     stop_loss_price = entry_price + (entry_price * (1 * stop_loss))
                     trailing_stop_price = entry_price - (entry_price * (1 * enable_trailing_stop))
                     diff = float(last_price) - float(trailing_stop_price)
-                self.logger.info(f'[ Stop Loss: {stop_loss_price} | Current Price: {last_price} | Trailing Stop: {trailing_stop_price} ]')
+                self.logger.info\
+                    (f'[ Stop Loss: {stop_loss_price} | Current Price: {last_price} | Trailing Stop: '
+                     f'{trailing_stop_price} ]')
 
                 open_orders = self.rest_open_order()
                 # stop loss
