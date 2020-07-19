@@ -12,13 +12,20 @@ from bmexlib.config_tool import ReadWriteConfig
 
 
 rwc = ReadWriteConfig()
-config = rwc.read_config('bmexlib/config.json') # <-- ADD YOUR API KEYS TO THIS FILE
-keys = config['config'][0]['keys']
+try:
+    config = rwc.read_config('bmexlib/config.json') # <-- ADD YOUR API KEYS TO THIS FILE
+except:
+    print('Please create `bmexlib/config.json` first - You can use the `bmexlib/config_too.py to generate. This file'
+          'will generate the json config using working testnet keys. Then open `bmexlib/conf.py` and change `testnet`'
+          'from `test=False` to `testnet=True`. Or simply add your real API keys to the generated `config.json` file')
+    exit(1)
+else:
+    keys = config['config'][0]['keys']
 
-api_key = keys[0][0]['XBTUSD']['key']
-api_secret = keys[0][0]['XBTUSD']['secret']
-api_key_alt = keys[1][0]['ETHUSD']['key']
-api_secret_alt = keys[1][0]['ETHUSD']['secret']
+    api_key = keys[0][0]['XBTUSD']['key']
+    api_secret = keys[0][0]['XBTUSD']['secret']
+    api_key_alt = keys[1][0]['ETHUSD']['key']
+    api_secret_alt = keys[1][0]['ETHUSD']['secret']
 
 # MqTT Options
 
