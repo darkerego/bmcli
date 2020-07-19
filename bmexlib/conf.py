@@ -15,9 +15,8 @@ rwc = ReadWriteConfig()
 try:
     config = rwc.read_config('bmexlib/config.json') # <-- ADD YOUR API KEYS TO THIS FILE
 except:
-    print('Please create `bmexlib/config.json` first - You can use the `bmexlib/config_too.py to generate. This file'
-          'will generate the json config using working testnet keys. Then open `bmexlib/conf.py` and change `testnet`'
-          'from `test=False` to `testnet=True`. Or simply add your real API keys to the generated `config.json` file')
+    print('Please create `bmexlib/config.json` first - copy bmexlib/config.example.json bmexlib/config.json'
+          'Then simply replace the keys with your real API keys to the generated `config.json` file')
     exit(1)
 else:
     keys = config['config'][0]['keys']
