@@ -1,6 +1,7 @@
 """Configuration File"""
 testnet = False
 from bmexlib.config_tool import ReadWriteConfig
+
 # Generate multiple API keys so you can work with different instruments with websockets at once, example:
 """
 {'config': [{'keys': [[{'XBTUSD': {'key': 'xxxxxxxxxxxxxx', 'secret': 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}}], 
@@ -20,6 +21,7 @@ api_key_alt = keys[1][0]['ETHUSD']['key']
 api_secret_alt = keys[1][0]['ETHUSD']['secret']
 
 # MqTT Options
+
 class MqTTConfig():
     SUBSCRIPTIONS = [('/bitmex/stdin', 0)]
     mq_bindAddress = '0.0.0.0'
@@ -31,4 +33,3 @@ class MqTTConfig():
     mq_pubtop = '/bitmex/stdio'
     mq_subtop = '/bitmex/stdin'
     verbose = True
-
