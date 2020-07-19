@@ -19,4 +19,16 @@ api_secret = keys[0][0]['XBTUSD']['secret']
 api_key_alt = keys[1][0]['ETHUSD']['key']
 api_secret_alt = keys[1][0]['ETHUSD']['secret']
 
+# MqTT Options
+class MqTTConfig():
+    SUBSCRIPTIONS = [('/bitmex/stdin', 0)]
+    mq_bindAddress = '0.0.0.0'
+    mq_host = '127.0.0.1'
+    mq_port = 1883
+    mq_keepalive = 60
+    mq_user = 'bmex_bot'
+    mq_pass = 'bitmex_1234!'
+    mq_pubtop = '/bitmex/stdio'
+    mq_subtop = '/bitmex/stdin'
+    verbose = True
 

@@ -10,8 +10,9 @@ import argparse
 from time import sleep
 
 from bmexlib.bitmex_api_lib import BitmexApiTool
-from bmexlib.conf import testnet, api_key, api_secret, keys
+from bmexlib.conf import testnet, api_key, api_secret, keys, MqTTConfig
 from bmexlib.colorprint import ColorPrint
+#from mqtt_lib.mqtt_skel import MqTTClient
 
 
 class BitmexLogic:
@@ -82,35 +83,57 @@ class BitmexLogic:
 
     def create_order(self):
         cp.green(f'Creating new order of type {args.new_order}...')
-        api = BitmexApiTool(symbol=self.symbol, api_key=api_key, api_secret=api_secret, test_net=testnet,
-                            require_ws=False)
-        cp.cyan(api.send_order(oq=args.quantity, ot=args.new_order, price=args.price, stopPx=args.stop_px,
+        #api = BitmexApiTool(symbol=self.symbol, api_key=api_key, api_secret=api_secret, test_net=testnet,
+        #                    require_ws=False)
+        cp.cyan(self.api.send_order(oq=args.quantity, ot=args.new_order, price=args.price, stopPx=args.stop_px,
                                pegOffsetValue=args.pegoffsetvalue))
 
     def chase_order(self):
         cp.green(f'Chasing order of qty {args.chase[0]}')
+        if args.use_limit_order:
+            self.api.limit_chase(oq=args.chase[0], max_chase=args.max_chase, failsafe=args.failsafe, double_check=False)
+            #offset = 25, ts_o_type = 'market', tschase = False, max_chase = None
         self.api.limit_chase(oq=args.chase[0], max_chase=args.max_chase, failsafe=args.failsafe, double_check=False)
 
-    def trail(self):
+    def trail(self, cts=None, ts_type='market'):
         if args.chase_ts is not None:
             max_chase_ts = float(args.chase_ts[0])
         else:
             max_chase_ts = None
-        offset = float(args.trailing_stop_order[0])
-        cp.green(f'Initializing Trailing Stop with offset: {offset}, Order Chase: {args.cts}')
-        api = BitmexApiTool(symbol=args.symbol, api_key=api_key, api_secret=api_secret, test_net=testnet,
-                            require_ws=True)
-        api.trailing_stop(offset=offset, ts_o_type=args.ts_type, tschase=args.cts, max_chase=max_chase_ts)
+        offset = float(args.trailing_stop[0])
+        cp.green(f'Initializing Trailing Stop with offset: {offset}, Order Chase: {cts}')
+        #api = BitmexApiTool(symbol=args.symbol, api_key=api_key, api_secret=api_secret, test_net=testnet,
+        #                    require_ws=True)
+        self.api.trailing_stop(offset=offset, ts_o_type=ts_type, tschase=cts, max_chase=max_chase_ts)
 
-    def auto_stop_poll(self):
+    def auto_stop_poll(self, use_ai_cal=False):
         stop_loss = args.autostop[0]
         enable_ts = args.autostop[1]
         trail_offset = args.autostop[2]
+
         cp.yellow(f'AutoStop: Stop Loss {stop_loss}, Enable Trailing Stop: {enable_ts}, Trail Offset: {trail_offset}')
-        api = BitmexApiTool(symbol=self.symbol, api_key=api_key, api_secret=api_secret, test_net=testnet,
-                            require_ws=True)
-        api.auto_stop(symbol=args.symbol, stop_loss=stop_loss, enable_trailing_stop=enable_ts,
-                      trail_offset=trail_offset)
+        api = self.api
+        if not use_ai_cal:
+            api.auto_stop(symbol=args.symbol, stop_loss=stop_loss, enable_trailing_stop=enable_ts,
+                          trail_offset=trail_offset)
+        else:
+            api.auto_stop(symbol=args.symbol, stop_loss=stop_loss, enable_trailing_stop=enable_ts,
+                          trail_offset=trail_offset, use_ai_calc=True)
+
+    def listen_mqtt(self):
+        while 1:
+            sleep(0.5)
+
+    def trail_pct(self, cts, ts_type):
+        if args.chase_ts is not None:
+            max_chase_ts = float(args.chase_ts[0])
+        else:
+            max_chase_ts = None
+        offset = float(args.trailing_stop_pct[0])
+        cp.green(f'Initializing Trailing Stop with offset percentage: {offset}, Order Chase: {cts}')
+        #api = BitmexApiTool(symbol=args.symbol, api_key=api_key, api_secret=api_secret, test_net=testnet,
+        #                    require_ws=True)
+        self.api.trailing_stop_pct(offset=offset, ts_o_type=ts_type, tschase=cts, max_chase=max_chase_ts)
 
 
 def parse_args():
@@ -136,8 +159,8 @@ def parse_args():
                                                                                                     'instrument'
                                                                                                     'activity.')
     order_opts = parser.add_argument_group('Flags for creating orders.')
-    order_opts.add_argument('-o', '--order', dest='new_order', help='Place an order', type=str,
-                            choices=['limit', 'market', 'post', 'stop', 'stop_limit', 'limit_if_touched'])
+    order_opts.add_argument('-o', '--order', dest='new_order', help='Place an order', type=str, default='limit',
+                            choices=['limit', 'market', 'post', 'Stop', 'StopLimit', 'LimitIfTouched'])
     order_opts.add_argument('-q', '--qty', '-oq', dest='quantity', type=float, help='Quantity for orders placed. '
                                                                                     'Use negative value to open a '
                                                                                     'short position.')
@@ -157,11 +180,18 @@ def parse_args():
     stop_opts = parser.add_argument_group('Auto/Trailing Stop Options')
     stop_opts.add_argument('-t', '--trailing_stop', dest='trailing_stop', type=float, nargs=1,
                            help='Place a trailing stop order with this offset. <-t 10.0>')
+    stop_opts.add_argument('-T', '--trailing_stop_pct', dest='trailing_stop_pct', type=float, nargs=1,
+                           help='Place a trailing stop with offset represented as percentage of upnl. If '
+                                'upnl < 0, wait until target upnl is accumulated before trigging.')
     stop_opts.add_argument('-a', '--auto_stop', dest='autostop', action='store', type=float, nargs=3,
                            help='Autostop Loss, Trailing Stop. Example -a 0.015 0.03 25 (Stop loss at 15 percent +/- '
                                 'entry price, enable trailing stop at 30 percent +/- entry price, close position '
                                 'when price drops 25 dollars +/- trailing stop price.) See documentation for more '
                                 'details.')
+    stop_opts.add_argument('-A', '--ai_stop', dest='ai_stop', action='store', type=float, nargs=3,
+                           help='AI Calculated auto stop loss. Like autostop, but with enhance features like '
+                                'auto calculation of your trail offset represented as a percentage of your PNL,'
+                                'and more. Experimental WIP. Use cautiously.')
     stop_opts.add_argument('-l', '--limit_order', '--limit', dest='use_limit_order', action='store_true', default=False,
                            help='Use limit orders for trailing stops. Warning: not recommended except for experienced '
                                 'traders.')
@@ -170,7 +200,20 @@ def parse_args():
                            nargs=1, type=float)
     scalp_opts = parser.add_argument_group('Options for Experimental Scalping')
     scalp_opts.add_argument('--scalp', action='store', nargs=1, type=float, help='Experimental scalping engine')
+    #scalp_opts.add_argument('--daemon', '-d', dest='mqtt_daemon', action='store_true', help='Start ws and rest cli and listen '
+                                                                                   # 'for commands over MqTT')
     # scalp_opts.add_argument('-')
+    limit_if_touched_opts = parser.add_argument_group('Limit If Touched Options')
+    limit_if_touched_opts.add_argument('-e', '--enter_position', dest='enter_position', action='store', nargs=3,
+                                       type=float,
+                                       help='Custom limit if touched order options. '
+                                            'Example: -e <touch price> <enter price> <contracts>'
+                                            '/ -e 9500 9501 1000')
+    limit_if_touched_opts.add_argument('-r', '--reduce_position', dest='close_position', action='store', nargs=2,
+                                       type=float, help='Reduce or close a position if price hits first number.'
+                                                        'Example <-r> touch price> <exit price> <contracts> '
+
+                                       )
     return parser.parse_args()
 
 
@@ -178,8 +221,11 @@ def main():
     """
     Main logic here
     """
-    global api_key, api_secret, args
-    args = parse_args()  # define args
+    global api_key, api_secret, args, tstype
+    try:
+        args = parse_args()  # define args
+    except Exception as fuck:
+        print(f'Fuck: {fuck}')
     symbol = args.symbol
 
     if args.use_curr_keys:
@@ -203,7 +249,9 @@ def main():
     """
     Main functionality % logic
     """
-
+    #if args.daemonize:
+    #    bmx = BitmexLogic(symbol=symbol, require_ws=False)
+    #    bmx.listen_mqtt()
     if args.monitor_acct:
         bmx = BitmexLogic(symbol=symbol, require_ws=False)
         bmx.monitor_account(symbol)
@@ -225,10 +273,23 @@ def main():
         bmx.chase_order()
     if args.trailing_stop:
         bmx = BitmexLogic(symbol=symbol, require_ws=True)
-        bmx.trail()
+        bmx.trail(cts=cts, ts_type=ts_type)
+    if args.trailing_stop_pct:
+        bmx = BitmexLogic(symbol=symbol, require_ws=True)
+        bmx.trail_pct(cts=cts, ts_type=ts_type)
     if args.autostop:
         bmx = BitmexLogic(symbol=symbol, require_ws=True)
         bmx.auto_stop_poll()
+    if args.ai_stop:
+        bmx = BitmexLogic(symbol=symbol, require_ws=True)
+        bmx.auto_stop_poll(use_ai_cal=True)
+    """if args.mqtt_daemon:
+        mq = MqTTClient()
+        mq.run(args.symbol)
+        mq.mqPublish(MqTTConfig.mq_pubtop, 'Running ... ')"""
+
+    #if args.auto_pnl_poll:
+    #    pass
     #if scalp:
     #    bmx = BitmexLogic(symbol=symbol, require_ws=True)
 
