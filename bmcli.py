@@ -12,6 +12,7 @@ from time import sleep
 from bmexlib.bitmex_api_lib import BitmexApiTool
 from bmexlib.conf import testnet, api_key, api_secret, keys, MqTTConfig
 from bmexlib.colorprint import ColorPrint
+
 #from mqtt_lib.mqtt_skel import MqTTClient
 
 
@@ -20,13 +21,13 @@ class BitmexLogic:
     Functions for everything the frontend does!
     @param require_ws: load up the websocket
     """
-    def __init__(self, symbol='XBTUSD', require_ws=False):
+    def __init__(self, symbol='XBTUSD', require_ws=False, scalp_pos_size=None):
 
         self.symbol = symbol
         self.require_ws = require_ws
         if self.require_ws:
             self.api = BitmexApiTool(symbol=self.symbol, api_key=api_key, api_secret=api_secret, test_net=testnet,
-                                     require_ws=True)
+                                     require_ws=True, pos_size=scalp_pos_size)
         else:
             self.api = BitmexApiTool(symbol=self.symbol, api_key=api_key, api_secret=api_secret, test_net=testnet,
                                      require_ws=False)
@@ -83,8 +84,6 @@ class BitmexLogic:
 
     def create_order(self):
         cp.green(f'Creating new order of type {args.new_order}...')
-        #api = BitmexApiTool(symbol=self.symbol, api_key=api_key, api_secret=api_secret, test_net=testnet,
-        #                    require_ws=False)
         cp.cyan(self.api.send_order(oq=args.quantity, ot=args.new_order, price=args.price, stopPx=args.stop_px,
                                pegOffsetValue=args.pegoffsetvalue))
 
@@ -102,8 +101,6 @@ class BitmexLogic:
             max_chase_ts = None
         offset = float(args.trailing_stop[0])
         cp.green(f'Initializing Trailing Stop with offset: {offset}, Order Chase: {cts}')
-        #api = BitmexApiTool(symbol=args.symbol, api_key=api_key, api_secret=api_secret, test_net=testnet,
-        #                    require_ws=True)
         self.api.trailing_stop(offset=offset, ts_o_type=ts_type, tschase=cts, max_chase=max_chase_ts)
 
     def auto_stop_poll(self, use_ai_cal=False):
@@ -131,9 +128,12 @@ class BitmexLogic:
             max_chase_ts = None
         offset = float(args.trailing_stop_pct[0])
         cp.green(f'Initializing Trailing Stop with offset percentage: {offset}, Order Chase: {cts}')
-        #api = BitmexApiTool(symbol=args.symbol, api_key=api_key, api_secret=api_secret, test_net=testnet,
-        #                    require_ws=True)
         self.api.trailing_stop_pct(offset=offset, ts_o_type=ts_type, tschase=cts, max_chase=max_chase_ts)
+
+
+    def scalp_engine(self):
+        api = self.api
+        api.sybrain_scalper()
 
 
 def parse_args():
@@ -159,7 +159,7 @@ def parse_args():
                                                                                                     'instrument'
                                                                                                     'activity.')
     order_opts = parser.add_argument_group('Flags for creating orders.')
-    order_opts.add_argument('-o', '--order', dest='new_order', help='Place an order', type=str, default='limit',
+    order_opts.add_argument('-o', '--order', dest='new_order', help='Place an order', type=str, default=None,
                             choices=['limit', 'market', 'post', 'Stop', 'StopLimit', 'LimitIfTouched'])
     order_opts.add_argument('-q', '--qty', '-oq', dest='quantity', type=float, help='Quantity for orders placed. '
                                                                                     'Use negative value to open a '
@@ -199,7 +199,9 @@ def parse_args():
                            help='Use limit order chasing with trailing stops. Specify max chase like <-C 3.0>',
                            nargs=1, type=float)
     scalp_opts = parser.add_argument_group('Options for Experimental Scalping')
-    scalp_opts.add_argument('--scalp', action='store', nargs=1, type=float, help='Experimental scalping engine')
+    scalp_opts.add_argument('--scalp', dest='scalp', action='store_true', help='Experimental scalping engine'
+                                                                                               '--scalp')
+    scalp_opts.add_argument('--size', dest='scalp_size', type=float, default=1.0, help='Scalp size')
     #scalp_opts.add_argument('--daemon', '-d', dest='mqtt_daemon', action='store_true', help='Start ws and rest cli and listen '
                                                                                    # 'for commands over MqTT')
     # scalp_opts.add_argument('-')
@@ -211,9 +213,7 @@ def parse_args():
                                             '/ -e 9500 9501 1000')
     limit_if_touched_opts.add_argument('-r', '--reduce_position', dest='close_position', action='store', nargs=2,
                                        type=float, help='Reduce or close a position if price hits first number.'
-                                                        'Example <-r> touch price> <exit price> <contracts> '
-
-                                       )
+                                                        'Example <-r> touch price> <exit price> <contracts> ')
     return parser.parse_args()
 
 
@@ -283,6 +283,12 @@ def main():
     if args.ai_stop:
         bmx = BitmexLogic(symbol=symbol, require_ws=True)
         bmx.auto_stop_poll(use_ai_cal=True)
+    if args.scalp:
+        cp.green('Scalp Engine called')
+        scalp_qty = args.scalp_size
+        print(scalp_qty)
+        bmx = BitmexLogic(symbol=symbol, require_ws=True, scalp_pos_size=scalp_qty)
+        bmx.scalp_engine()
     """if args.mqtt_daemon:
         mq = MqTTClient()
         mq.run(args.symbol)

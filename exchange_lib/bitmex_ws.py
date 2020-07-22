@@ -69,6 +69,7 @@ class BitMEXWebsocket(Event):
         self.__connect(wsURL, symbol)
         self.logger.info('Connected to WS.')
 
+
         # Connected. Wait for partials
         self.__wait_for_symbol(symbol)
         if api_key:
@@ -106,13 +107,26 @@ class BitMEXWebsocket(Event):
         '''Get your margin details.'''
         return self.data['margin'][0]
 
+    def wallet_balance(self):
+        return self.data['margin'][0]['walletBalance']
+
     def positions(self):
         '''Get your positions.'''
         return self.data['position']
 
+    def open_positions(self):
+        '''Get recent trades.'''
+        # print("positions", self.data['position'][0]['currentQty'])
+        return self.data['position'][0]['currentQty']
+
     def market_depth(self):
         '''Get market depth (orderbook). Returns all levels.'''
-        return self.data
+        return self.data['orderBook10']
+
+    def open_stops(self):
+        '''Get recent trades.'''
+        # print("stops", self.data['order'])
+        return self.data['order']
 
     def open_orders(self, clOrdIDPrefix):
         '''Get all your open orders.'''
@@ -177,7 +191,7 @@ class BitMEXWebsocket(Event):
         '''
 
         # You can sub to orderBookL2 for all levels, or orderBook10 for top 10 levels & save bandwidth
-        symbolSubs = ["execution", "instrument", "order", "position", "quote", "trade"]
+        symbolSubs = ["execution", "instrument", "order", "position", "quote", "trade", "orderBook10"]
         genericSubs = ["margin"]
 
         subscriptions = [sub + ':' + self.symbol for sub in symbolSubs]
