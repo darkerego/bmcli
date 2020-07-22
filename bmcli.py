@@ -134,7 +134,7 @@ class BitmexLogic:
     def scalp_engine(self):
         cp.green('Launchng the scalp engine!')
         cp.yellow('Brought to you by by `5ymph0en1x` <https://github.com/5ymph0en1x/SyBrain>!')
-        cp.blue(f'Positon size: {args.scalp_qty}')
+        cp.blue(f'Positon size: {args.scalp_size}')
         api = self.api
         api.sybrain_scalper()
 
