@@ -18,7 +18,8 @@ sometimes don't execute on time or properly due to 'system overload', or whateve
 </p>
 
 ## Features:
-
+- *NEW* -- Intergrated [Sybrain](https://github.com/5ymph0en1x/SyBrain/blob/master/sybrain.py) by
+[5ymph0en1x](https://github.com/5ymph0en1x) as **Scalp Engine** (`--scalp --size 100`)
 - Create long/short limit/market/post/etc orders
 - Check account balance
 - Get current position

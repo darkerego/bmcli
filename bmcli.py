@@ -132,6 +132,9 @@ class BitmexLogic:
 
 
     def scalp_engine(self):
+        cp.green('Launchng the scalp engine!')
+        cp.yellow('Brought to you by by `5ymph0en1x` <https://github.com/5ymph0en1x/SyBrain>!')
+        cp.blue(f'Positon size: {args.scalp_qty}')
         api = self.api
         api.sybrain_scalper()
 
@@ -199,13 +202,11 @@ def parse_args():
                            help='Use limit order chasing with trailing stops. Specify max chase like <-C 3.0>',
                            nargs=1, type=float)
     scalp_opts = parser.add_argument_group('Options for Experimental Scalping')
-    scalp_opts.add_argument('--scalp', dest='scalp', action='store_true', help='Experimental scalping engine'
-                                                                                               '--scalp')
+    scalp_opts.add_argument('--scalp', dest='scalp', action='store_true', help='Experimental scalping engine '                                                                    
+                            'Sybrain: --scalp --symbol ETHUSD ')
     scalp_opts.add_argument('--size', dest='scalp_size', type=float, default=1.0, help='Scalp size')
-    #scalp_opts.add_argument('--daemon', '-d', dest='mqtt_daemon', action='store_true', help='Start ws and rest cli and listen '
-                                                                                   # 'for commands over MqTT')
-    # scalp_opts.add_argument('-')
-    limit_if_touched_opts = parser.add_argument_group('Limit If Touched Options')
+
+    """ limit_if_touched_opts = parser.add_argument_group('Limit If Touched Options')
     limit_if_touched_opts.add_argument('-e', '--enter_position', dest='enter_position', action='store', nargs=3,
                                        type=float,
                                        help='Custom limit if touched order options. '
@@ -213,7 +214,7 @@ def parse_args():
                                             '/ -e 9500 9501 1000')
     limit_if_touched_opts.add_argument('-r', '--reduce_position', dest='close_position', action='store', nargs=2,
                                        type=float, help='Reduce or close a position if price hits first number.'
-                                                        'Example <-r> touch price> <exit price> <contracts> ')
+                                                        'Example <-r> touch price> <exit price> <contracts> ')"""
     return parser.parse_args()
 
 
@@ -284,9 +285,7 @@ def main():
         bmx = BitmexLogic(symbol=symbol, require_ws=True)
         bmx.auto_stop_poll(use_ai_cal=True)
     if args.scalp:
-        cp.green('Scalp Engine called')
         scalp_qty = args.scalp_size
-        print(scalp_qty)
         bmx = BitmexLogic(symbol=symbol, require_ws=True, scalp_pos_size=scalp_qty)
         bmx.scalp_engine()
     """if args.mqtt_daemon:
