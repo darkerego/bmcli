@@ -4,6 +4,8 @@
 
 BTC: 16XCgQyNxoYmduCxWBoVQwk8QgLw6dZ8De
 
+### BITMEX SUCKS. COME TO [FTX](https://ftx.com/#a=darkerego)
+
 ======
 
 ## About:
