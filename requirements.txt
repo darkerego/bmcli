@@ -38,7 +38,7 @@ strict-rfc3339==0.7
 swagger-spec-validator==2.5.0
 threadpoolctl==2.1.0
 typing-extensions==3.7.4.2
-urllib3==1.25.9
+urllib3==1.26.5
 webcolors==1.11.1
 websocket-client==0.56.0
 websockets==9.1
