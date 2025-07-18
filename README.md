@@ -2,7 +2,7 @@
 
 ~ Darkerego, 2019 - 2020
 
-BTC: 16XCgQyNxoYmduCxWBoVQwk8QgLw6dZ8De
+ETH: 0x2474AD6c3EBAFcb981b1E639263E90cC68a404Bb
 
 ### BITMEX SUCKS. COME TO [GMX](https://app.gmx.io/#/trade/?ref=thankssbf)
 
