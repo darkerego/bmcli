@@ -4,7 +4,7 @@
 
 ETH: 0x2474AD6c3EBAFcb981b1E639263E90cC68a404Bb
 
-### BITMEX SUCKS. COME TO [GMX](https://app.gmx.io/#/trade/?ref=thankssbf)
+### BITMEX SUCKS. COME TO [HYPERLIQUID](https://github.com/darkerego/hypertrader))
 
 ======
 
